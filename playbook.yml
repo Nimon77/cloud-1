@@ -1,0 +1,28 @@
+---
+- name: Commons
+  tags: commons
+  gather_facts: true
+  hosts: all
+  roles:
+    - role: common
+
+- name: mysql
+  tags: mysql
+  gather_facts: false
+  hosts: all
+  roles:
+    - role: mysql
+
+- name: wordpress
+  tags: wordpress
+  gather_facts: false
+  hosts: all
+  roles:
+    - role: wordpress
+
+- name: phpmyadmin
+  tags: phpmyadmin
+  gather_facts: false
+  hosts: all
+  roles:
+    - role: phpmyadmin

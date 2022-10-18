@@ -1,0 +1,26 @@
+- name: "Pull wordpress image"
+  tags: wordpress
+  docker_image:
+    name: wordpress
+    source: pull
+  register: wordpress_image
+
+- name: "Create wordpress container"
+  tags: wordpress
+  docker_container:
+    name: wordpress
+    image: wordpress
+    state: started
+    restart_policy: always
+    env:
+      WORDPRESS_DB_HOST: "mysql"
+      WORDPRESS_DB_USER: "{{ mysql_user }}"
+      WORDPRESS_DB_PASSWORD: "{{ mysql_password }}"
+      WORDPRESS_DB_NAME: "{{ mysql_database }}"
+    volumes:
+      - wordpress:/var/www/html
+    ports:
+      - "80:80"
+    networks:
+      - name: mysql
+  register: wordpress_container

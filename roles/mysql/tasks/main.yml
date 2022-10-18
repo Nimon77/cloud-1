@@ -1,0 +1,33 @@
+- name: "pull mysql image"
+  tags: mysql
+  docker_image:
+    name: mysql
+    source: pull
+  register: mysql_image
+
+- name: "Create network"
+  tags: mysql
+  docker_network:
+    name: mysql
+    state: present
+  register: mysql_network
+
+- name: "Create mysql container"
+  tags: mysql
+  docker_container:
+    name: mysql
+    image: mysql
+    state: started
+    restart_policy: always
+    env:
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+      MYSQL_DATABASE: "{{ mysql_database }}"
+      MYSQL_USER: "{{ mysql_user }}"
+      MYSQL_PASSWORD: "{{ mysql_password }}"
+    volumes:
+      - mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - name: mysql
+  register: mysql_container

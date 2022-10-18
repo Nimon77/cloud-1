@@ -1,0 +1,80 @@
+- name: Uninstall old Docker packages
+  tags: docker_install
+  become: true
+  apt:
+    pkg:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+    purge: yes
+
+- name: Install required Docker packages
+  tags: docker_install
+  become: true
+  apt:
+    update_cache: yes
+    pkg:
+      - ca-certificates
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: latest
+  register: apt_install
+
+- name: Add Docker GPG key
+  tags: docker_install
+  become: true
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  register: apt_key
+
+- name: Add Docker repository
+  tags: docker
+  become: true
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+  register: apt_repository
+
+- name: Install Docker
+  tags: docker_install
+  become: true
+  apt:
+    update_cache: yes
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: latest
+  register: apt_install
+
+- name: Enable Docker service
+  tags: docker_install
+  become: true
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+  register: systemd
+
+- name: Add user to Docker group
+  tags: docker_install
+  become: true
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  register: user
+
+- name: pip install docker
+  tags: [docker_install, pip]
+  pip:
+    name: docker
+    state: latest
+  register: pip
