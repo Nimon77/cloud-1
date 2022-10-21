@@ -1,0 +1,27 @@
+- name: Copy wcli files
+  tags: ["website", "wordpress"]
+  copy:
+    src: wpcli
+    dest: /home/{{ ansible_user }}
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+  register: wpcli
+
+- name: Copy wcli template
+  tags: ["website", "wordpress"]
+  template:
+    src: wp-auto-config.yml.j2
+    dest: /home/{{ ansible_user }}/wp-auto-config.yml
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+  register: wpcli_template
+
+- name: Setup WordPress
+  tags: ["website", "wordpress"]
+  become: true
+  shell: |
+    docker compose --project-directory /home/{{ ansible_user }}/ \
+      -f docker-compose.yml -f wp-auto-config.yml run --rm wp-auto-config
+  register: wpcli_setup

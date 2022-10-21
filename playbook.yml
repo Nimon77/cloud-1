@@ -6,23 +6,20 @@
   roles:
     - role: common
 
-- name: mysql
-  tags: mysql
-  gather_facts: false
+- name: Setup Website
+  tags: website
+  gather_facts: true
+  vars_files:
+    - group_vars/docker.yml
   hosts: all
   roles:
-    - role: mysql
+    - role: website
 
-- name: wordpress
+- name: Auto-setup WordPress
   tags: wordpress
-  gather_facts: false
+  gather_facts: true
+  vars_files:
+    - group_vars/docker.yml
   hosts: all
   roles:
-    - role: wordpress
-
-- name: phpmyadmin
-  tags: phpmyadmin
-  gather_facts: false
-  hosts: all
-  roles:
-    - role: phpmyadmin
+    - role: wp_auto-config
