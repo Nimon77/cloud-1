@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   mysql:
-    image: mysql:latest
+    image: mysql:{{ MYSQL_VERSION | default('latest') }}
     container_name: {{ COMPOSE_PROJECT_NAME }}_mysql
     restart: always
     environment:
@@ -14,7 +14,7 @@ services:
       - {{ DATABASE_VOLUME }}:/var/lib/mysql
 
   wordpress:
-    image: "wordpress:{{ WORDPRESS_VERSION }}"
+    image: "wordpress:{{ WORDPRESS_VERSION | default('latest') }}"
     container_name: {{ COMPOSE_PROJECT_NAME }}_wordpress
     environment:
       WORDPRESS_DB_HOST: mysql
@@ -28,7 +28,7 @@ services:
       - mysql
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: "phpmyadmin/phpmyadmin:{{ PHPMYADMIN_VERSION | default('latest') }}"
     container_name: {{ COMPOSE_PROJECT_NAME }}_phpmyadmin
     restart: always
     environment:
