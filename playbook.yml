@@ -11,6 +11,7 @@
   gather_facts: true
   vars_files:
     - group_vars/docker.yml
+    - group_vars/vault
   hosts: all
   roles:
     - role: website
@@ -20,6 +21,7 @@
   gather_facts: true
   vars_files:
     - group_vars/docker.yml
+    - group_vars/vault
   hosts: all
   roles:
     - role: wp_auto-config
