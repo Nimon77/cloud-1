@@ -7,6 +7,6 @@ This project is an introduction to cloud servers
 - [x] Install all requiered package
 - [x] docker-compose for Wordpress, mysql, phpmyadmin
 - [x] Modular deployment with vars for each settings
-- [ ] Password in ansible vault
-- [ ] Password in docker secret
-- [ ] Setup Traefik ? For TLS and security
+- [x] Password in ansible vault
+- [x] Password in docker secret
+- [ ] Setup Traefik ? For TLS, security and reverse proxy

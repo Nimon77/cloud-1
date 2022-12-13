@@ -1,6 +1,23 @@
 version: "3.9"
 
 services:
+  reverse-proxy:
+    image: traefik:v2.9
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:{{ WEBSITES_PORT | default('80') }}
+      - --entrypoints.websecure.address=:{{ WEBSITES_SECURE_PORT | default('443') }}
+    ports:
+      - "{{ WEBSITES_PORT | default('80') }}:{{ WEBSITES_PORT | default('80') }}"
+      - "{{ WEBSITES_SECURE_PORT | default('443') }}:{{ WEBSITES_SECURE_PORT | default('443') }}"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - default
+
   mysql:
     image: mysql:{{ MYSQL_VERSION | default('latest') }}
     container_name: {{ COMPOSE_PROJECT_NAME }}_mysql
@@ -12,20 +29,27 @@ services:
       MYSQL_PASSWORD: {{ DATABASE_PASSWORD }}
     volumes:
       - {{ DATABASE_VOLUME }}:/var/lib/mysql
+    networks:
+      - default
 
   wordpress:
     image: "wordpress:{{ WORDPRESS_VERSION | default('latest') }}"
     container_name: {{ COMPOSE_PROJECT_NAME }}_wordpress
+    restart: always
     environment:
       WORDPRESS_DB_HOST: mysql
       WORDPRESS_DB_USER: {{ DATABASE_USER }}
       WORDPRESS_DB_PASSWORD: {{ DATABASE_PASSWORD }}
-    ports:
-      - "{{ WORDPRESS_PORT }}:80"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.rule: "Host(`{{ WORDPRESS_URL | default(ansible_hostname) }}`)"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.entrypoints: "web"
     volumes:
       - {{ WORDPRESS_VOLUME }}:/var/www/html
     depends_on:
       - mysql
+    networks:
+      - default
 
   phpmyadmin:
     image: "phpmyadmin/phpmyadmin:{{ PHPMYADMIN_VERSION | default('latest') }}"
@@ -33,12 +57,17 @@ services:
     restart: always
     environment:
       PMA_HOST: mysql
-      PMA_USER: {{ DATABASE_USER }}
-      PMA_PASSWORD: {{ DATABASE_PASSWORD }}
-    ports:
-      - "{{ PHPMYADMIN_PORT }}:80"
+      # PMA_USER: {{ DATABASE_USER }}
+      # PMA_PASSWORD: {{ DATABASE_PASSWORD }}
+      PMA_ABSOLUTE_URI: "http://{{ PHPMYADMIN_URL }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.rule: "Host(`{{ PHPMYADMIN_URL | default(ansible_hostname) }}`)"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.entrypoints: "web"
     depends_on:
       - mysql
+    networks:
+      - default
 
 volumes:
   {{ DATABASE_VOLUME }}:
