@@ -23,11 +23,21 @@ echo -n "Enter wordpress_admin_password: "
 read -s wordpress_admin_password
 echo ""
 
+echo -n "Enter cloudflare_global_token: "
+read -s cloudflare_global_token
+echo ""
+
+echo -n "Enter cloudflare_token: "
+read -s cloudflare_token
+echo ""
+
 echo "Creating vault file..."
 cat << EOF > vault
 ---
 vault_database_password: $database_password
 vault_wordpress_admin_password: $wordpress_admin_password
+vault_cloudflare_global_token: $cloudflare_global_token
+vault_cloudflare_token: $cloudflare_token
 EOF
 
 echo "Encrypting vault file..."

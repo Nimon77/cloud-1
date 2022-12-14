@@ -5,16 +5,26 @@ COMPOSE_PROJECT_NAME: wordpress
 
 # 2/ Database user and password -----------------------------------------
 # Set non-root database user if wanted (optional)
-DATABASE_PASSWORD: "{{ vault_database_password }}"
 DATABASE_USER: wordpress
+DATABASE_PASSWORD: "{{ vault_database_password }}"
 
 # 3/ For wordpress auto-install and auto-configuration -------------------
 WORDPRESS_WEBSITE_TITLE: "Blog"
 
+# CLOUDFLARE
+CLOUDFLARE_ZONE_ID: "ZONE_ID_HERE"
+CLOUDFLARE_DOMAIN: "DOMAIN_HERE"
+CLOUDFLARE_SUB_DOMAIN: "cloud-1.{{ CLOUDFLARE_DOMAIN }}"
+CLOUDFLARE_EMAIL: "EMAIL_HERE"
+CLOUDFLARE_TOKEN: "{{ vault_cloudflare_token }}"
+CLOUDFLARE_GLOBAL_TOKEN: "{{ vault_cloudflare_global_token }}"
+
 # URL
-WORDPRESS_URL: "wordpress.cloud-1.nimon.fr"
-PHPMYADMIN_URL: "pma.cloud-1.nimon.fr"
-WORDPRESS_WEBSITE_URL: "http://{{ WORDPRESS_URL }}"
+TRAEFIK_URL: "traefik.{{ CLOUDFLARE_SUB_DOMAIN }}"
+WORDPRESS_URL: "wordpress.{{ CLOUDFLARE_SUB_DOMAIN }}"
+PHPMYADMIN_URL: "pma.{{ CLOUDFLARE_SUB_DOMAIN }}"
+
+WORDPRESS_WEBSITE_URL: "https://{{ WORDPRESS_URL }}"
 # WORDPRESS_WEBSITE_URL_WITHOUT_HTTP: localhost
 WORDPRESS_WEBSITE_POST_URL_STRUCTURE: "/blog/%postname%/"
 

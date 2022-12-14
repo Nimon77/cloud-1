@@ -4,19 +4,64 @@ services:
   reverse-proxy:
     image: traefik:v2.9
     command:
+      - --log.level=DEBUG
       - --api.insecure=true
+      - --api.dashboard=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+      # Set up LetsEncrypt
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.letsencrypt.acme.email={{ CLOUDFLARE_EMAIL }}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      # Use lentsencrypt staging server for testing
+      # - --certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      # Set up an insecure listener that redirects all traffic to TLS
       - --entrypoints.web.address=:{{ WEBSITES_PORT | default('80') }}
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:{{ WEBSITES_SECURE_PORT | default('443') }}
+      # Set up the TLS configuration for our websecure listener
+      - --entrypoints.websecure.http.tls=true
+      - --entrypoints.websecure.http.tls.certResolver=letsencrypt
+      - --entrypoints.websecure.http.tls.domains[0].main={{ CLOUDFLARE_SUB_DOMAIN }}
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.{{ CLOUDFLARE_SUB_DOMAIN }}
+    environment:
+      - CLOUDFLARE_EMAIL={{ CLOUDFLARE_EMAIL }}
+      - CLOUDFLARE_DNS_API_TOKEN={{CLOUDFLARE_TOKEN }}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik.rule: "Host(`{{ TRAEFIK_URL | default("traefik." + ansible_hostname) }}`)"
+      traefik.http.routers.traefik.entrypoints: "websecure"
+      traefik.http.routers.traefik.tls.certresolver: "letsencrypt"
+      traefik.http.routers.traefik.tls.domains[0].main: "{{ CLOUDFLARE_SUB_DOMAIN }}"
+      traefik.http.routers.traefik.tls.domains[0].sans: "*.{{ CLOUDFLARE_SUB_DOMAIN }}"
+      traefik.http.routers.traefik.service: "api@internal"
+      traefik.http.routers.traefik.middlewares: "strip-prefix"
+      traefik.http.middlewares.strip-prefix.stripprefix.prefixes: "/traefik"
     ports:
       - "{{ WEBSITES_PORT | default('80') }}:{{ WEBSITES_PORT | default('80') }}"
       - "{{ WEBSITES_SECURE_PORT | default('443') }}:{{ WEBSITES_SECURE_PORT | default('443') }}"
-      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - certs:/letsencrypt
     networks:
       - default
+
+  cf-companion:
+    container_name: cf-companion
+    image: tiredofit/traefik-cloudflare-companion:latest
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TRAEFIK_VERSION=2
+      - CF_EMAIL={{ CLOUDFLARE_EMAIL }} # Same as traefik
+      - CF_TOKEN={{ CLOUDFLARE_GLOBAL_TOKEN }} # Same as traefik
+      - TARGET_DOMAIN={{ CLOUDFLARE_SUB_DOMAIN }}
+      - DOMAIN1={{ CLOUDFLARE_DOMAIN }}
+      - DOMAIN1_ZONE_ID={{ CLOUDFLARE_ZONE_ID }} # Copy from Cloudflare Overview page
+      - DOMAIN1_PROXIED=FALSE
 
   mysql:
     image: mysql:{{ MYSQL_VERSION | default('latest') }}
@@ -42,8 +87,11 @@ services:
       WORDPRESS_DB_PASSWORD: {{ DATABASE_PASSWORD }}
     labels:
       traefik.enable: "true"
-      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.rule: "Host(`{{ WORDPRESS_URL | default(ansible_hostname) }}`)"
-      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.entrypoints: "web"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.rule: "Host(`{{ WORDPRESS_URL | default("wordpress." + ansible_hostname) }}`)"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.entrypoints: "websecure"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.tls.certresolver: "letsencrypt"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.tls.domains[0].main: "{{ CLOUDFLARE_SUB_DOMAIN }}"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_wordpress.tls.domains[0].sans: "*.{{ CLOUDFLARE_SUB_DOMAIN }}"
     volumes:
       - {{ WORDPRESS_VOLUME }}:/var/www/html
     depends_on:
@@ -62,14 +110,18 @@ services:
       PMA_ABSOLUTE_URI: "http://{{ PHPMYADMIN_URL }}"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.rule: "Host(`{{ PHPMYADMIN_URL | default(ansible_hostname) }}`)"
-      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.entrypoints: "web"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.rule: "Host(`{{ PHPMYADMIN_URL | default("pma." + ansible_hostname) }}`)"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.entrypoints: "websecure"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.tls.certresolver: "letsencrypt"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.tls.domains[0].main: "{{ CLOUDFLARE_SUB_DOMAIN }}"
+      traefik.http.routers.{{ COMPOSE_PROJECT_NAME }}_phpmyadmin.tls.domains[0].sans: "*.{{ CLOUDFLARE_SUB_DOMAIN }}"
     depends_on:
       - mysql
     networks:
       - default
 
 volumes:
+  certs:
   {{ DATABASE_VOLUME }}:
   {{ WORDPRESS_VOLUME }}:
 
