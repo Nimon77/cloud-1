@@ -9,4 +9,6 @@ This project is an introduction to cloud servers
 - [x] Modular deployment with vars for each settings
 - [x] Password in ansible vault
 - [x] Password in docker secret
-- [ ] Setup Traefik ? For TLS, security and reverse proxy
+- [x] Setup Traefik ? For TLS, security and reverse proxy
+- [x] Auto-generate TLS cert with DNS-01 challenge and letsencrypt
+- [x] Auto-push CNAME to cloudflare
