@@ -56,8 +56,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - TRAEFIK_VERSION=2
-      - CF_EMAIL={{ CLOUDFLARE_EMAIL }} # Same as traefik
-      - CF_TOKEN={{ CLOUDFLARE_GLOBAL_TOKEN }} # Same as traefik
+      - CF_TOKEN={{ CLOUDFLARE_TOKEN }} # Same as traefik
       - TARGET_DOMAIN={{ CLOUDFLARE_SUB_DOMAIN }}
       - DOMAIN1={{ CLOUDFLARE_DOMAIN }}
       - DOMAIN1_ZONE_ID={{ CLOUDFLARE_ZONE_ID }} # Copy from Cloudflare Overview page

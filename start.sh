@@ -1,15 +1,15 @@
 #!/bin/zsh
 
-if [ $# -eq 0 ]
-  then
-	echo "No arguments supplied"
-	echo "Usage: ./first.sh <Nb hosts>"
-	exit 1
-fi
-
 if [[ -z "$ANSIBLE_CONFIG" ]]; then
 	echo "ANSIBLE_CONFIG is not set"
 	echo "use: export ANSIBLE_CONFIG=$PWD/config.cfg"
+fi
+
+if [ $# -eq 0 ]
+  then
+	echo "No arguments supplied, if you want create VM with multipass :"
+	echo "Usage: ./start.sh <Nb hosts>"
+	exit 1
 fi
 
 IP=$(ip a s en0 | grep "inet " | cut -d " " -f 2 | cut -d "/" -f 1)
